@@ -6,4 +6,9 @@ cols = ["fLength", "fWidth", "fSize", "fConc", "fConc1", "fAsym", "fM3Long", "fM
 
 df = pd.read_csv("sample-data/magic04.data", names=cols)
 
+# convert g & h to 1 and 0
+# g stands for gamma
+# h stands for hadron
+df["class"] = (df["class"] == "g").astype(int)
+
 print(df.head())
