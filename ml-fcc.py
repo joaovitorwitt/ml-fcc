@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import RandomOverSampler
+
 
 cols = ["fLength", "fWidth", "fSize", "fConc", "fConc1", "fAsym", "fM3Long", "fM3Trans", "fAlpha", "fDist", "class"]
 
@@ -12,19 +14,19 @@ df = pd.read_csv("sample-data/magic04.data", names=cols)
 # h stands for hadron
 df["class"] = (df["class"] == "g").astype(int)
 
-
-for label in cols[:-1]:
-    # separate the information into the ones that are gamma or hadron
-    plt.hist(df[df["class"] == 1][label], color="blue", label="gamma", alpha=0.7, density=True)
-    plt.hist(df[df["class"] == 0][label], color="red", label="hadron", alpha=0.7, density=True)
-    # title of the histogram
-    plt.title(label)
-    # y label
-    plt.ylabel("Probability")
-    # x label with the names equal to the current columns
-    plt.xlabel(label)
-    plt.legend()
-    plt.show()
+def create_hist():
+    for label in cols[:-1]:
+        # separate the information into the ones that are gamma or hadron
+        plt.hist(df[df["class"] == 1][label], color="blue", label="gamma", alpha=0.7, density=True)
+        plt.hist(df[df["class"] == 0][label], color="red", label="hadron", alpha=0.7, density=True)
+        # title of the histogram
+        plt.title(label)
+        # y label
+        plt.ylabel("Probability")
+        # x label with the names equal to the current columns
+        plt.xlabel(label)
+        plt.legend()
+        plt.show()
 
 
 # traing, validate, test datasets
@@ -43,7 +45,7 @@ train, valid, test = np.split(df.sample(frac=1), [int(0.6 * len(df)), int(0.8 * 
 
 
 # scaling our dataset
-def scale_dataset(dataframe):
+def scale_dataset(dataframe, oversample=False):
     # extracts the features from the dataframe, assuming the features are in all columns except for the last one
     x = dataframe[dataframe.cols[:-1]].values
     # assuming that the target value is in the last column
@@ -52,9 +54,20 @@ def scale_dataset(dataframe):
     scaler = StandardScaler()
     x = scaler.fit_transform(x)
 
+    if oversample:
+        ros = RandomOverSampler()
+        # take the lessen class and increase the size of the smaller class
+        x, y = ros.fit_resample(x, y)
+
     # horizontally stacks the scales features 'x' and the target variable 'y'
     data = np.hstack((x, np.reshape(y, (-1, 1))))
 
     return data, x, y
 
 
+train, x_train, y_train = scale_dataset(train, oversample=True)
+valid, x_valid, y_valid = scale_dataset(valid, oversample=False)
+test, x_test, y_test = scale_dataset(test, oversample=False)
+
+# print(len(train[train["class"] == 1]))
+# print(len(train[train["class"] == 0]))
